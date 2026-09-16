@@ -223,10 +223,26 @@ jobs:
         shell: bash
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
-          # 固定维护说明
+          # Fixed release notes (English)
           cat > notes.md <<'EOF'
           ## Kraken Player
-          > 这是 Kraken Player 的发布版本。
+
+          First public release — free and open-source music player for Windows, macOS and Linux.
+
+          ### Windows (regular PC: get x64)
+          - **setup.exe** — classic installer (recommended)
+          - **portable.exe** — no install needed
+
+          ### macOS
+          - **arm64.dmg** — Apple Silicon Macs (M1/M2/M3/M4)
+          - **x64.dmg** — Intel Macs
+          - Right-click → Open on first launch (unsigned app)
+
+          ### Linux
+          - **x86_64.AppImage** — easiest (allow execution, then double-click)
+          - **amd64.deb** — Ubuntu / Debian
+
+          > Windows may show a SmartScreen warning (unsigned app): More info → Run anyway.
 
           EOF
           # 重跑场景
