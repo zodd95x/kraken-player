@@ -23,6 +23,10 @@ export class AudioElementPlayer extends BaseAudioPlayer {
   private isInternalSeeking = false;
   /** 目标时间缓存，用于在 seek 过程中返回稳定的 currentTime */
   private targetSeekTime = 0;
+  /** Seek 锁的加锁时间戳（毫秒）。若 `seeked` 事件丢失，锁超时后自动释放，避免进度永久冻结 */
+  private seekLockTimestamp = 0;
+  /** Seek 锁的最大持有时长（毫秒） */
+  private static readonly SEEK_LOCK_TIMEOUT = 2000;
 
   /** 引擎能力描述 */
   public override readonly capabilities: EngineCapabilities = {
@@ -41,6 +45,13 @@ export class AudioElementPlayer extends BaseAudioPlayer {
     this.audioElement.addEventListener("seeked", () => {
       this.isInternalSeeking = false;
     });
+    // 若 seek 未能完成（seeked 丢失），以下事件同样释放锁，避免 currentTime 永久冻结
+    const releaseSeekLock = () => {
+      this.isInternalSeeking = false;
+    };
+    this.audioElement.addEventListener("error", releaseSeekLock);
+    this.audioElement.addEventListener("abort", releaseSeekLock);
+    this.audioElement.addEventListener("emptied", releaseSeekLock);
   }
 
   /**
@@ -69,6 +80,7 @@ export class AudioElementPlayer extends BaseAudioPlayer {
    * @param url 音频地址
    */
   public async load(url: string): Promise<void> {
+    this.isInternalSeeking = false;
     this.audioElement.src = url;
     this.audioElement.load();
   }
@@ -95,6 +107,7 @@ export class AudioElementPlayer extends BaseAudioPlayer {
   public async seek(time: number): Promise<void> {
     this.isInternalSeeking = true;
     this.targetSeekTime = time;
+    this.seekLockTimestamp = Date.now();
 
     this.cancelPendingPause();
     this.doSeek(time);
@@ -106,6 +119,7 @@ export class AudioElementPlayer extends BaseAudioPlayer {
    */
   public stop(): void {
     super.stop();
+    this.isInternalSeeking = false;
     this.audioElement.removeAttribute("src");
     this.audioElement.load();
   }
@@ -195,7 +209,12 @@ export class AudioElementPlayer extends BaseAudioPlayer {
    */
   public get currentTime(): number {
     if (this.isInternalSeeking) {
-      return this.targetSeekTime;
+      // 安全阀：若 seeked 迟迟不来，超时后释放锁并返回真实时间
+      if (Date.now() - this.seekLockTimestamp > AudioElementPlayer.SEEK_LOCK_TIMEOUT) {
+        this.isInternalSeeking = false;
+      } else {
+        return this.targetSeekTime;
+      }
     }
     const settingStore = useSettingStore();
 
