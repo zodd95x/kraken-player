@@ -1,0 +1,14 @@
+@font-face {
+  font-family: "logo";
+  src: url("./logo.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Pirata One";
+  src: url("./PirataOne-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}

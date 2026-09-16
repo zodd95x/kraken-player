@@ -1,0 +1,243 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - v* # 只在 tag v* 时触发
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: 22.x
+
+# 同一个 tag 的发布串行执行，避免并发上传资源产生竞态
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # ===================================================================
+  #  并行构建所有平台和架构
+  # ===================================================================
+  build:
+    name: Build on ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      # 矩阵策略
+      # 即使一个矩阵任务失败，其他任务也会继续运行
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows x64
+            runner: windows-latest
+            target: windows-x64
+          - name: Windows arm64
+            runner: windows-11-arm
+            target: windows-arm64
+          - name: macOS x64
+            runner: macos-15-intel
+            target: macos-x64
+          - name: macOS arm64
+            runner: macos-latest
+            target: macos-arm64
+          - name: Linux x64
+            runner: ubuntu-latest
+            target: linux-x64
+          - name: Linux arm64
+            runner: ubuntu-24.04-arm
+            target: linux-arm64
+    # 开始步骤
+    steps:
+      # 检出 Git 仓库
+      - name: Check out git repository
+        uses: actions/checkout@v6
+      # 设置 pnpm
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+      # 安装 Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      # 设置 Rust
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      # 清理旧的构建产物
+      - name: Clean workspace on Windows
+        if: runner.os == 'Windows'
+        run: |
+          Write-Host "🧹 Cleaning workspace, node_modules, and Electron caches..."
+          if (Test-Path dist) { Remove-Item -Recurse -Force dist }
+          if (Test-Path out) { Remove-Item -Recurse -Force out }
+          if (Test-Path node_modules) { Remove-Item -Recurse -Force node_modules }
+
+          if (Test-Path "$env:LOCALAPPDATA\electron-builder") {
+            Remove-Item "$env:LOCALAPPDATA\electron-builder" -Recurse -Force -ErrorAction SilentlyContinue
+          }
+          if (Test-Path "$env:LOCALAPPDATA\electron") {
+            Remove-Item "$env:LOCALAPPDATA\electron" -Recurse -Force -ErrorAction SilentlyContinue
+          }
+
+          if (Test-Path "$env:USERPROFILE\.pnpm-store") {
+            Remove-Item "$env:USERPROFILE\.pnpm-store" -Recurse -Force -ErrorAction SilentlyContinue
+          }
+      - name: Clean workspace on macOS & Linux
+        if: runner.os == 'macOS' || runner.os == 'Linux'
+        run: |
+          echo "🧹 Cleaning workspace, node_modules, and Electron caches..."
+          rm -rf dist out node_modules ~/.cache/electron-builder ~/.cache/electron
+
+      # 更新 Ubuntu 软件源并安装依赖
+      - name: Update and Install Ubuntu Dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y rpm libarchive-tools libopenjp2-tools
+
+      # macOS 上安装 LLVM 以支持 Wasm 编译
+      - name: Install LLVM on macOS
+        if: runner.os == 'macOS'
+        run: brew install llvm
+      - name: Set Environment Variables on macOS
+        if: runner.os == 'macOS'
+        run: |
+          echo "CC=$(brew --prefix llvm)/bin/clang" >> $GITHUB_ENV
+          echo "AR=$(brew --prefix llvm)/bin/llvm-ar" >> $GITHUB_ENV
+
+      # 复制环境变量文件
+      - name: Copy .env file on Windows
+        if: runner.os == 'Windows'
+        run: |
+          if (-not (Test-Path .env)) {
+            Copy-Item .env.example .env
+          } else {
+            Write-Host ".env file already exists. Skipping the copy step."
+          }
+      - name: Copy .env file on macOS & Linux
+        if: runner.os == 'macOS' || runner.os == 'Linux'
+        run: |
+          if [ ! -f .env ]; then
+            cp .env.example .env
+          else
+            echo ".env file already exists. Skipping the copy step."
+          fi
+
+      # 安装项目依赖
+      - name: Install dependencies
+        run: pnpm install
+
+      # 构建 Electron App
+      # Do NOT pass GH_TOKEN here, or electron-builder will try to
+      # create the Release itself (6 parallel jobs = 403 race).
+      # Publishing is done by the "release" job via gh CLI.
+      - name: Build
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+          # renderer 构建很吃内存，本地默认堆会 OOM
+          NODE_OPTIONS: --max-old-space-size=8192
+        shell: bash
+        run: |
+          # Note: call electron-builder directly (not via pnpm run),
+          # pnpm mangles extra args by forwarding a literal "--".
+          case "${{ matrix.target }}" in
+            windows-x64)
+              pnpm build
+              pnpm exec electron-builder --win --x64 --publish never --config electron-builder.config.ts
+              ;;
+            windows-arm64)
+              pnpm build
+              pnpm exec electron-builder --win --arm64 --publish never --config electron-builder.config.ts
+              ;;
+            macos-x64)
+              pnpm build
+              pnpm exec electron-builder --mac --x64 --publish never --config electron-builder.config.ts
+              ;;
+            macos-arm64)
+              pnpm build
+              pnpm exec electron-builder --mac --arm64 --publish never --config electron-builder.config.ts
+              ;;
+            linux-x64)
+              pnpm build
+              pnpm exec electron-builder --linux --x64 --publish never --config electron-builder.config.ts
+              ;;
+            linux-arm64)
+              pnpm build
+              pnpm exec electron-builder --linux --arm64 --publish never --config electron-builder.config.ts
+              ;;
+            *)
+              echo "Unsupported target: ${{ matrix.target }}"
+              exit 1
+              ;;
+          esac
+
+      # 合并所有构建
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: Kraken-Player-${{ matrix.name }}
+          path: dist/*.*
+
+  # ===================================================================
+  #  Create & Publish GitHub Release
+  # ===================================================================
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+
+      # 整理待发布资源
+      - name: Prepare release assets
+        shell: bash
+        run: |
+          mkdir -p release-assets
+          find artifacts -type f ! -name 'builder-debug.yml' -exec cp -n {} release-assets/ \;
+          echo "待发布资源："
+          ls -1 release-assets
+
+      # 用官方 gh CLI 确定性创建并发布 Release（替代有重复草稿/竞态问题的第三方 action）
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          # 固定维护说明
+          cat > notes.md <<'EOF'
+          ## Kraken Player
+          > 这是 Kraken Player 的发布版本。
+
+          EOF
+          # 重跑场景
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release delete "$TAG" --repo "$GITHUB_REPOSITORY" --yes
+          fi
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "$TAG" \
+            --notes-file notes.md \
+            --generate-notes \
+            --verify-tag \
+            --draft \
+            release-assets/*

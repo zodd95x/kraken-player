@@ -1,0 +1,43 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+task.md
+
+node_modules
+.pnpm-store
+.DS_Store
+dist
+dist-ssr
+coverage
+*.local
+out
+.env
+target
+*.node
+
+# Editor directories and files
+.vscode/*
+.vscode
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.env.development
+.env.production
+
+# Docs
+docs/.vitepress/cache
+docs/.vitepress/dist
+
+# AI
+.trae/*
+.cursor/*
+.claude/*

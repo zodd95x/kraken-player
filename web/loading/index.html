@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kraken Player</title>
+    <link rel="icon" type="image/x-icon" href="/icons/favicon.ico" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+
+  <body>
+    <main>
+      <div class="logo">
+        <img src="/icons/logo-icon.png" width="120" height="120" alt="Kraken Player" />
+      </div>
+      <div class="loader"></div>
+      <button id="startApp">Start directly</button>
+    </main>
+    <footer>
+      <span
+        >Kraken Player · Copyright &copy; <span id="year"></span>
+        <span id="contributors">Kraken Player contributors</span></span
+      >
+    </footer>
+
+    <script>
+      const startAppDom = document.getElementById("startApp");
+      const contributorsDom = document.getElementById("contributors");
+
+      const loadingTranslations = {
+        en: {
+          start: "Start directly",
+          contributors: "Kraken Player contributors",
+        },
+        fr: {
+          start: "Démarrer directement",
+          contributors: "contributeurs de Kraken Player",
+        },
+        zh: {
+          start: "直接启动",
+          contributors: "Kraken Player 贡献者",
+        },
+      };
+
+      let language = "en";
+      try {
+        const savedSetting = JSON.parse(localStorage.getItem("setting-store") || "{}");
+        if (["en", "fr", "zh"].includes(savedSetting.language)) {
+          language = savedSetting.language;
+        }
+      } catch {
+        language = navigator.language.startsWith("fr") ? "fr" : "en";
+      }
+
+      const translations = loadingTranslations[language];
+      document.documentElement.lang = language;
+      startAppDom.textContent = translations.start;
+      contributorsDom.textContent = translations.contributors;
+
+      // 更改年份
+      const currentYear = new Date().getFullYear();
+      document.getElementById("year").innerHTML = currentYear;
+
+      startAppDom.addEventListener("click", () => {
+        window.electron.ipcRenderer.send("win-loaded");
+      });
+
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          startAppDom.style.opacity = 1;
+        }, 3000);
+      });
+    </script>
+  </body>
+</html>

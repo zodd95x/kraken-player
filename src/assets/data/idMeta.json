@@ -1,0 +1,32 @@
+{
+  "radarPlaylist": [
+    {
+      "id": 60198,
+      "name": "Billboard Hot 100"
+    },
+    {
+      "id": 180106,
+      "name": "UK Singles Chart"
+    },
+    {
+      "id": 27135204,
+      "name": "France NRJ Vos Hits"
+    },
+    {
+      "id": 3812895,
+      "name": "Beatport Global Dance"
+    },
+    {
+      "id": 14028249541,
+      "name": "Global Hip-Hop / Rap"
+    },
+    {
+      "id": 2809513713,
+      "name": "Pop Internationale & Hits"
+    },
+    {
+      "id": 12225155968,
+      "name": "R&B & Soul Mondial"
+    }
+  ]
+}

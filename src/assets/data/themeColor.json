@@ -1,0 +1,112 @@
+{
+  "default": {
+    "label": "default",
+    "name": "Défaut",
+    "color": "#fe7971"
+  },
+  "red": {
+    "label": "red",
+    "name": "Rouge",
+    "color": "#F44336"
+  },
+  "pink": {
+    "label": "pink",
+    "name": "Rose",
+    "color": "#E91E63"
+  },
+  "purple": {
+    "label": "purple",
+    "name": "Violet",
+    "color": "#9C27B0"
+  },
+  "deepPurple": {
+    "label": "deepPurple",
+    "name": "Pourpre",
+    "color": "#673AB7"
+  },
+  "indigo": {
+    "label": "indigo",
+    "name": "Indigo",
+    "color": "#3F51B5"
+  },
+  "blue": {
+    "label": "blue",
+    "name": "Bleu",
+    "color": "#2196F3"
+  },
+  "lightBlue": {
+    "label": "lightBlue",
+    "name": "Bleu ciel",
+    "color": "#03A9F4"
+  },
+  "cyan": {
+    "label": "cyan",
+    "name": "Cyan",
+    "color": "#00BCD4"
+  },
+  "teal": {
+    "label": "teal",
+    "name": "Sarcelle",
+    "color": "#009688"
+  },
+  "green": {
+    "label": "green",
+    "name": "Vert",
+    "color": "#4CAF50"
+  },
+  "lightGreen": {
+    "label": "lightGreen",
+    "name": "Vert clair",
+    "color": "#8BC34A"
+  },
+  "lime": {
+    "label": "lime",
+    "name": "Lime",
+    "color": "#CDDC39"
+  },
+  "yellow": {
+    "label": "yellow",
+    "name": "Jaune",
+    "color": "#FFEB3B"
+  },
+  "amber": {
+    "label": "amber",
+    "name": "Ambre",
+    "color": "#FFC107"
+  },
+  "orange": {
+    "label": "orange",
+    "name": "Orange",
+    "color": "#FF9800"
+  },
+  "deepOrange": {
+    "label": "deepOrange",
+    "name": "Orange vif",
+    "color": "#FF5722"
+  },
+  "brown": {
+    "label": "brown",
+    "name": "Marron",
+    "color": "#795548"
+  },
+  "grey": {
+    "label": "grey",
+    "name": "Gris",
+    "color": "#9E9E9E"
+  },
+  "blueGrey": {
+    "label": "blueGrey",
+    "name": "Gris bleuté",
+    "color": "#607D8B"
+  },
+  "solid": {
+    "label": "solid",
+    "name": "Monochrome",
+    "color": "#9e9e9e"
+  },
+  "custom": {
+    "label": "custom",
+    "name": "Personnalisé",
+    "color": ""
+  }
+}

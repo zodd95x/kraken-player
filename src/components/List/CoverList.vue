@@ -1,0 +1,522 @@
+<template>
+  <Transition name="fade" mode="out-in">
+    <div v-if="data.length > 0" :class="['cover-list', type]">
+      <div class="cover-grid">
+        <div
+          v-for="(item, index) in data"
+          :key="index"
+          :class="['cover-item', { 'no-cover': hiddenCover }]"
+          @click="goDetail(item)"
+          @contextmenu="
+            coverMenuRef?.openDropdown($event, item, type === 'podcast' ? 'radio' : type)
+          "
+        >
+          <!-- 封面 -->
+          <div v-if="!hiddenCover" class="cover">
+            <s-image
+              :key="item.cover"
+              :src="
+                type === 'video' ? `${item.cover}?param=464y260` : item.coverSize?.m || item.cover
+              "
+              :default-src="
+                type !== 'video' ? '/images/album.jpg?asset' : '/images/video.jpg?asset'
+              "
+              class="cover-img"
+              once
+            />
+            <template v-if="item.playCount">
+              <!-- 遮罩 -->
+              <div v-if="type !== 'album'" class="cover-mask" />
+              <!-- 播放量 -->
+              <div v-if="type !== 'album'" class="play-count">
+                <SvgIcon name="Play" />
+                <span class="num">{{ formatNumber(item.playCount || 0) }}</span>
+              </div>
+            </template>
+            <!-- 简介 -->
+            <div v-if="shouldShowDescription(item)" class="description">
+              <n-text class="text-hidden"> {{ item.description }}</n-text>
+            </div>
+            <!-- 播放按钮 -->
+            <div class="play-btn" @click.stop>
+              <n-button
+                :focusable="false"
+                :loading="item.loading"
+                secondary
+                circle
+                class="play"
+                @click.stop="playList(item)"
+              >
+                <template #icon>
+                  <SvgIcon :size="32" :name="isPlaying(item.id) ? 'Pause' : 'Play'" />
+                </template>
+              </n-button>
+            </div>
+          </div>
+          <!-- 信息 -->
+          <div class="cover-data">
+            <n-text class="name text-hidden">{{ formatTitle(item) }}</n-text>
+            <!-- 创建者 -->
+            <n-text
+              v-if="(type === 'playlist' || type === 'radio') && item?.creator?.id"
+              class="creator"
+              depth="3"
+            >
+              {{ formatCreator(item) }}
+            </n-text>
+            <!-- 更新提示 -->
+            <n-text v-if="item.updateTip" class="tip" depth="3">{{
+              trSetting(item.updateTip)
+            }}</n-text>
+            <!-- 专辑信息 -->
+            <div v-if="type === 'album'" class="meta">
+              <n-text class="count" depth="3">{{ formatTrackCount(item.count || 0) }}</n-text>
+              <n-text class="date" depth="3">{{ formatTimestamp(item.createTime) }}</n-text>
+            </div>
+            <!-- 歌手 -->
+            <template v-if="type === 'video' && item.artists">
+              <div v-if="Array.isArray(item.artists)" class="artists text-hidden">
+                <n-text v-for="(ar, arIndex) in item.artists" :key="arIndex" class="ar">
+                  {{
+                    settingStore.hideBracketedContent
+                      ? removeBrackets(ar.name)
+                      : ar.name || trSetting("未知歌手")
+                  }}
+                </n-text>
+              </div>
+              <div v-else class="artists text-hidden">
+                <n-text class="ar">
+                  {{
+                    settingStore.hideBracketedContent
+                      ? removeBrackets(item.artists)
+                      : item.artists || trSetting("未知歌手")
+                  }}
+                </n-text>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+      <!-- 加载更多 -->
+      <n-flex v-if="loadMore" class="load-more" justify="center">
+        <n-button :loading="loading" size="large" strong secondary round @click="emit('loadMore')">
+          {{ trSetting("加载更多") }}
+        </n-button>
+      </n-flex>
+      <!-- 右键菜单 -->
+      <CoverMenu ref="coverMenuRef" @toPlay="playList" />
+    </div>
+    <div v-else-if="loading" :class="['cover-list', 'loading', type]">
+      <div class="cover-grid">
+        <div
+          v-for="item in loadingNum || 50"
+          :key="item"
+          :class="['cover-item', { 'no-cover': hiddenCover }]"
+        >
+          <div v-if="!hiddenCover" class="cover">
+            <n-skeleton class="cover-img" />
+          </div>
+          <div class="cover-data" :style="hiddenCover ? { width: '100%', padding: '0 12px' } : {}">
+            <n-skeleton text round :repeat="2" />
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- 空列表 -->
+    <n-empty v-else :description="emptyDescription || trSetting('暂无内容')" size="large" />
+  </Transition>
+</template>
+
+<script setup lang="ts">
+import type { CoverType, SongType } from "@/types/main";
+import { albumDetail } from "@/api/album";
+import { formatNumber } from "@/utils/helper";
+import { useMusicStore, useStatusStore, useLocalStore, useSettingStore } from "@/stores";
+import { debounce } from "lodash-es";
+import { formatSongsList, removeBrackets } from "@/utils/format";
+import { songDetail } from "@/api/song";
+import { playlistAllSongs } from "@/api/playlist";
+import { getPodcastDetailAndEpisodes } from "@/api/podcast";
+import { radioAllProgram } from "@/api/radio";
+import { usePlayerController } from "@/core/player/PlayerController";
+import { formatTimestamp } from "@/utils/time";
+import CoverMenu from "@/components/Menu/CoverMenu.vue";
+import { trSetting } from "@/utils/i18nSettings";
+import { localizePlaylistTitle, localizeCreatorName } from "@/utils/playlistLocalization";
+
+const formatTrackCount = (count: number) => {
+  const lang = settingStore.language;
+  if (lang === "zh") return `${count} 首`;
+  if (lang === "en") return `${count} track(s)`;
+  return `${count} titre(s)`;
+};
+
+// 格式化标题
+const formatTitle = (item: CoverType) => {
+  if (props.type === "playlist") {
+    return localizePlaylistTitle(item.name);
+  }
+  return item.name;
+};
+
+// 格式化创建者
+const formatCreator = (creator: any) => {
+  const rawCreator = creator?.name || creator;
+  if (!rawCreator) return trSetting("未知");
+  return localizeCreatorName(rawCreator);
+};
+
+// 仅在非中文模式下隐藏包含中文的原生推广简介
+const shouldShowDescription = (item: CoverType) => {
+  if (!item.description) return false;
+  if (settingStore.language !== "zh" && /[\u4e00-\u9fa5]/.test(item.description)) {
+    return false;
+  }
+  return true;
+};
+
+const props = defineProps<{
+  data: CoverType[];
+  type: "playlist" | "album" | "video" | "radio" | "podcast";
+  loadMore?: boolean;
+  loading?: boolean;
+  loadingNum?: number;
+  loadingText?: string;
+  emptyDescription?: string;
+  /** 是否为流媒体数据 */
+  isStreaming?: boolean;
+  hiddenCover?: boolean;
+}>();
+
+const emit = defineEmits<{
+  // 加载更多
+  loadMore: [];
+}>();
+
+const router = useRouter();
+const musicStore = useMusicStore();
+const statusStore = useStatusStore();
+const localStore = useLocalStore();
+const settingStore = useSettingStore();
+const player = usePlayerController();
+
+// 右键菜单
+const coverMenuRef = ref<InstanceType<typeof CoverMenu> | null>(null);
+
+// 是否处于当前播放列表
+const isPlaying = (id: number | string) =>
+  musicStore.playPlaylistId === id && statusStore.playStatus;
+
+// 查看详情
+const goDetail = (item: CoverType) => {
+  // 流媒体歌单跳转到专门的路由
+  if (props.isStreaming && props.type === "playlist") {
+    router.push({
+      name: "streaming-playlist",
+      query: { id: item.id },
+    });
+    return;
+  }
+  router.push({
+    name: props.type === "podcast" ? "radio" : props.type,
+    query: { id: item.id },
+  });
+};
+
+// 播放歌单
+const playList = debounce(
+  async (item: CoverType) => {
+    try {
+      // 视频直接跳转
+      if (props.type === "video") {
+        return router.push({ name: "video", query: { id: item.id } });
+      }
+      // 流媒体歌单直接跳转到详情页
+      if (props.isStreaming && props.type === "playlist") {
+        return router.push({ name: "streaming-playlist", query: { id: item.id } });
+      }
+      // 是否为当前列表
+      if (musicStore.playPlaylistId === item.id) return player.playOrPause();
+      // 开始加载
+      item.loading = true;
+      // 获取播放列表
+      const list = await getListData(item.id);
+      player.updatePlayList(list, undefined, item.id as number);
+    } catch (error) {
+      console.error("Error to play: ", error);
+    } finally {
+      item.loading = false;
+    }
+  },
+  300,
+  { leading: true, trailing: false },
+);
+
+// 获取列表数据
+const getListData = async (id: number | string): Promise<SongType[]> => {
+  // 判断是否为本地歌单
+  const isLocalPlaylist = localStore.isLocalPlaylist(id);
+
+  switch (props.type) {
+    case "album": {
+      const result = await albumDetail(Number(id));
+      const ids: number[] = result.songs.map((song: any) => song.id as number);
+      const songRes = await songDetail(ids);
+      return formatSongsList(songRes.songs);
+    }
+    case "playlist": {
+      // 本地歌单
+      if (isLocalPlaylist) {
+        const result = localStore.getLocalPlaylistDetail(Number(id));
+        if (!result) {
+          window.$message.error("La playlist locale n'existe pas");
+          return [];
+        }
+        return result.songs;
+      }
+      // 在线歌单：仅请求 100 首
+      const result = await playlistAllSongs(Number(id), 100);
+      return formatSongsList(result.songs);
+    }
+    case "radio": {
+      const result = await radioAllProgram(Number(id), 100);
+      return formatSongsList(result.programs);
+    }
+    case "podcast": {
+      // Apple 播客：取单集列表，直接从第一集开始播
+      const { episodes } = await getPodcastDetailAndEpisodes(id, 100);
+      if (!episodes.length) {
+        window.$message.error("Impossible de charger les épisodes");
+      }
+      return episodes;
+    }
+    default:
+      return [];
+  }
+};
+</script>
+
+<style lang="scss" scoped>
+.cover-list {
+  width: 100%;
+  padding: 20px 4px;
+  .cover-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 20px;
+    @media (max-width: 600px) {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+  }
+  .cover-item {
+    position: relative;
+    height: auto;
+    border-radius: 16px;
+    z-index: 0;
+    transition:
+      background-color 0.3s,
+      transform 0.3s;
+    cursor: pointer;
+    .cover {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0px 0px 4px 2px rgba(0, 0, 0, 0.1);
+      transition:
+        border-radius 0.3s,
+        box-shadow 0.3s;
+      :deep(img) {
+        width: 100%;
+        height: 100%;
+        // opacity: 0;
+        transition: opacity 0.35s ease-in-out;
+      }
+      .cover-img {
+        transition:
+          filter 0.3s,
+          transform 0.3s;
+      }
+      .cover-mask {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 30%;
+        width: 100%;
+        background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0));
+      }
+      .play-count {
+        position: absolute;
+        display: flex;
+        align-items: center;
+        top: 10px;
+        right: 12px;
+        color: #fff;
+        font-weight: bold;
+        z-index: 2;
+        .n-icon {
+          color: #fff;
+          font-size: 16px;
+          margin-right: 4px;
+        }
+      }
+      .description {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        padding: 40px 60px 12px 12px;
+        background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.6));
+        transform: translateY(100%);
+        transition: transform 0.3s;
+        .n-text {
+          color: #fff;
+          line-clamp: 3;
+          -webkit-line-clamp: 3;
+        }
+      }
+      .play {
+        position: absolute;
+        right: 10px;
+        bottom: 10px;
+        transform: translateY(8px);
+        opacity: 0;
+        transition: all 0.3s;
+        background-color: #ffffff66;
+        backdrop-filter: blur(6px);
+        --n-width: 42px;
+        --n-height: 42px;
+        .n-icon {
+          color: #fff;
+        }
+        :deep(.n-base-loading) {
+          color: #fff;
+        }
+        &:active {
+          background-color: #ffffff33;
+        }
+      }
+      .n-skeleton {
+        height: 100%;
+      }
+    }
+    .cover-data {
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      .name {
+        font-size: 16px;
+        line-clamp: 2;
+        -webkit-line-clamp: 2;
+      }
+      .tip {
+        font-size: 13px;
+      }
+      .meta {
+        font-size: 13px;
+        .count {
+          &::after {
+            content: "·";
+            margin: 0 2px;
+          }
+        }
+      }
+      .artists {
+        margin-top: 2px;
+        font-size: 13px;
+        .ar {
+          display: inline-flex;
+          transition: opacity 0.3s;
+          opacity: 0.6;
+          cursor: pointer;
+          &::after {
+            content: "/";
+            margin: 0 4px;
+          }
+          &:last-child {
+            &::after {
+              display: none;
+            }
+          }
+          &:hover {
+            opacity: 0.8;
+          }
+        }
+      }
+      :deep(.n-skeleton) {
+        &:first-child {
+          margin-bottom: 12px;
+        }
+      }
+    }
+    &:hover {
+      background-color: rgba(var(--primary), 0.12);
+      .cover {
+        .cover-img {
+          transform: scale(1.1);
+          filter: brightness(0.8);
+        }
+        .description {
+          transform: translateY(0);
+        }
+        .play {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+    }
+    &.no-cover {
+      background-color: var(--surface-container-hex);
+      border: 2px solid rgba(var(--primary), 0.12);
+      padding: 0;
+      overflow: hidden;
+      &:hover {
+        border-color: rgba(var(--primary), 0.58);
+      }
+      .cover-data {
+        height: 100%;
+        justify-content: center;
+        .name {
+          font-size: 18px;
+          font-weight: bold;
+        }
+      }
+    }
+  }
+  .load-more {
+    margin: 20px 0;
+  }
+  &.video {
+    .cover-grid {
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+    .cover-item {
+      .cover {
+        aspect-ratio: 16/9;
+      }
+    }
+  }
+  &.loading {
+    .cover {
+      box-shadow: none;
+    }
+    .cover-item.no-cover {
+      height: 80px;
+      .cover-data {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+    }
+  }
+}
+.n-empty {
+  margin-top: 60px;
+}
+</style>

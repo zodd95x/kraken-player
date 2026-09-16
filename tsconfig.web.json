@@ -1,0 +1,30 @@
+{
+  "extends": "@electron-toolkit/tsconfig/tsconfig.web.json",
+  "include": [
+    "src/env.d.ts",
+    "src/**/*",
+    "src/**/*.vue",
+    "windows/**/*",
+    "windows/**/*.vue",
+    "electron/main/index.d.ts",
+    "electron/preload/index.d.ts",
+    "dist/lastfm.ts"
+  ],
+  "compilerOptions": {
+    "composite": true,
+    "esModuleInterop": true,
+    "moduleResolution": "bundler",
+    "maxNodeModuleJsDepth": 2,
+    "paths": {
+      "@/*": ["./src/*"],
+      "@emi": ["./native/external-media-integration"],
+      "@native/*": ["./native/*"],
+      "@opencc": ["./native/ferrous-opencc-wasm/pkg"],
+      "@shared": ["./src/types/shared"],
+      "@windows/*": ["./windows/*"]
+    },
+    "types": ["node", "electron", "electron-vite/node", "./auto-imports.d.ts", "./components.d.ts"],
+    "lib": ["ES2022", "DOM", "DOM.Iterable", "WebWorker"],
+    "target": "es2022"
+  }
+}

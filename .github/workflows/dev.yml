@@ -1,0 +1,282 @@
+# Dev 分支推送部署预览
+name: Build Dev
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - "src/**"
+      - "web/**"
+      - "electron/**"
+      - "public/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "electron-builder.config.ts"
+      - "electron.vite.config.ts"
+      - "tsconfig*.json"
+      - ".env.example"
+      - "Dockerfile"
+      - "docker-compose.yml"
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: 22.x
+
+jobs:
+  # ===================================================================
+  #  并行构建所有平台和架构
+  # ===================================================================
+  build:
+    name: Build on ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      # 矩阵策略
+      # 即使一个矩阵任务失败，其他任务也会继续运行
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows x64
+            runner: windows-latest
+            target: windows-x64
+          - name: Windows arm64
+            runner: windows-11-arm
+            target: windows-arm64
+          - name: macOS x64
+            runner: macos-15-intel
+            target: macos-x64
+          - name: macOS arm64
+            runner: macos-latest
+            target: macos-arm64
+          - name: Linux x64
+            runner: ubuntu-latest
+            target: linux-x64
+          - name: Linux arm64
+            runner: ubuntu-24.04-arm
+            target: linux-arm64
+    # 开始步骤
+    steps:
+      # 检出 Git 仓库
+      - name: Check out git repository
+        uses: actions/checkout@v6
+      # 设置 pnpm
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v5
+      # 安装 Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      # 设置 Rust
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      # 清理旧的构建产物
+      - name: Clean workspace on Windows
+        if: runner.os == 'Windows'
+        run: |
+          Write-Host "🧹 Cleaning workspace, node_modules, Electron caches, and pnpm store..."
+          if (Test-Path dist) { Remove-Item -Recurse -Force dist }
+          if (Test-Path out) { Remove-Item -Recurse -Force out }
+          if (Test-Path node_modules) { Remove-Item -Recurse -Force node_modules }
+
+          if (Test-Path "$env:LOCALAPPDATA\electron-builder") {
+            Remove-Item "$env:LOCALAPPDATA\electron-builder" -Recurse -Force -ErrorAction SilentlyContinue
+          }
+          if (Test-Path "$env:LOCALAPPDATA\electron") {
+            Remove-Item "$env:LOCALAPPDATA\electron" -Recurse -Force -ErrorAction SilentlyContinue
+          }
+
+          if (Test-Path "$env:USERPROFILE\.pnpm-store") {
+            Remove-Item "$env:USERPROFILE\.pnpm-store" -Recurse -Force -ErrorAction SilentlyContinue
+          }
+      - name: Clean workspace on macOS & Linux
+        if: runner.os == 'macOS' || runner.os == 'Linux'
+        run: |
+          echo "🧹 Cleaning workspace, node_modules, Electron caches, and pnpm store..."
+          rm -rf dist out node_modules ~/.cache/electron-builder ~/.cache/electron ~/.pnpm-store
+
+      # 更新 Ubuntu 软件源并安装依赖
+      - name: Update and Install Ubuntu Dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y rpm libarchive-tools libopenjp2-tools
+
+      # macOS 上安装 LLVM 以支持 Wasm 编译
+      - name: Install LLVM on macOS
+        if: runner.os == 'macOS'
+        run: brew install llvm
+      - name: Set Environment Variables on macOS
+        if: runner.os == 'macOS'
+        run: |
+          echo "CC=$(brew --prefix llvm)/bin/clang" >> $GITHUB_ENV
+          echo "AR=$(brew --prefix llvm)/bin/llvm-ar" >> $GITHUB_ENV
+
+      # 复制环境变量文件
+      - name: Copy .env file on Windows
+        if: runner.os == 'Windows'
+        run: |
+          if (-not (Test-Path .env)) {
+            Copy-Item .env.example .env
+          } else {
+            Write-Host ".env file already exists. Skipping the copy step."
+          }
+      - name: Copy .env file on macOS & Linux
+        if: runner.os == 'macOS' || runner.os == 'Linux'
+        run: |
+          if [ ! -f .env ]; then
+            cp .env.example .env
+          else
+            echo ".env file already exists. Skipping the copy step."
+          fi
+
+      # 安装项目依赖
+      - name: Install dependencies
+        run: pnpm install
+
+      # 构建 Electron App
+      - name: Build
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          case "${{ matrix.target }}" in
+            windows-x64)
+              pnpm build:win -- --x64
+              ;;
+            windows-arm64)
+              pnpm build:win -- --arm64
+              ;;
+            macos-x64)
+              pnpm build:mac -- --x64
+              ;;
+            macos-arm64)
+              pnpm build:mac -- --arm64
+              ;;
+            linux-x64)
+              pnpm build:linux -- --x64
+              ;;
+            linux-arm64)
+              pnpm build:linux -- --arm64
+              ;;
+            *)
+              echo "Unsupported target: ${{ matrix.target }}"
+              exit 1
+              ;;
+          esac
+
+      # 分别上传
+      - {
+          name: Upload Artifacts - Windows Setup x64,
+          if: matrix.target == 'windows-x64',
+          uses: actions/upload-artifact@v7,
+          with: { name: Kraken-Player-Windows-setup-x64, path: dist/*-x64-setup.exe },
+        }
+      - {
+          name: Upload Artifacts - Windows Setup arm64,
+          if: matrix.target == 'windows-arm64',
+          uses: actions/upload-artifact@v7,
+          with: { name: Kraken-Player-Windows-setup-arm64, path: dist/*-arm64-setup.exe },
+        }
+      - {
+          name: Upload Artifacts - Windows Portable x64,
+          if: matrix.target == 'windows-x64',
+          uses: actions/upload-artifact@v7,
+          with: { name: Kraken-Player-Windows-portable-x64, path: dist/*-x64-portable.exe },
+        }
+      - {
+          name: Upload Artifacts - Windows Portable arm64,
+          if: matrix.target == 'windows-arm64',
+          uses: actions/upload-artifact@v7,
+          with: { name: Kraken-Player-Windows-portable-arm64, path: dist/*-arm64-portable.exe },
+        }
+      - {
+          name: Upload Artifacts - macOS DMG x64,
+          if: matrix.target == 'macos-x64',
+          uses: actions/upload-artifact@v7,
+          with: { name: Kraken-Player-macOS-dmg-x64, path: dist/*-x64.dmg },
+        }
+      - {
+          name: Upload Artifacts - macOS DMG arm64,
+          if: matrix.target == 'macos-arm64',
+          uses: actions/upload-artifact@v7,
+          with: { name: Kraken-Player-macOS-dmg-arm64, path: dist/*-arm64.dmg },
+        }
+      - {
+          name: Upload Artifacts - macOS Zip x64,
+          if: matrix.target == 'macos-x64',
+          uses: actions/upload-artifact@v7,
+          with: { name: Kraken-Player-macOS-zip-x64, path: dist/*-x64.zip },
+        }
+      - {
+          name: Upload Artifacts - macOS Zip arm64,
+          if: matrix.target == 'macos-arm64',
+          uses: actions/upload-artifact@v7,
+          with: { name: Kraken-Player-macOS-zip-arm64, path: dist/*-arm64.zip },
+        }
+      - {
+          name: Upload Artifacts - Linux AppImage x64,
+          if: matrix.target == 'linux-x64',
+          uses: actions/upload-artifact@v7,
+          with: { name: Kraken-Player-Linux-appimage-x64, path: dist/*-x86_64.AppImage },
+        }
+      - {
+          name: Upload Artifacts - Linux AppImage arm64,
+          if: matrix.target == 'linux-arm64',
+          uses: actions/upload-artifact@v7,
+          with: { name: Kraken-Player-Linux-appimage-arm64, path: dist/*-arm64.AppImage },
+        }
+      - {
+          name: Upload Artifacts - Linux Pacman x64,
+          if: matrix.target == 'linux-x64',
+          uses: actions/upload-artifact@v7,
+          with: { name: Kraken-Player-Linux-pacman-x64, path: dist/*-x64.pacman },
+        }
+      - {
+          name: Upload Artifacts - Linux Pacman arm64,
+          if: matrix.target == 'linux-arm64',
+          uses: actions/upload-artifact@v7,
+          with: { name: Kraken-Player-Linux-pacman-arm64, path: dist/*-aarch64.pacman },
+        }
+      - {
+          name: Upload Artifacts - Linux DEB x64,
+          if: matrix.target == 'linux-x64',
+          uses: actions/upload-artifact@v7,
+          with: { name: Kraken-Player-Linux-deb-x64, path: dist/*-amd64.deb },
+        }
+      - {
+          name: Upload Artifacts - Linux DEB arm64,
+          if: matrix.target == 'linux-arm64',
+          uses: actions/upload-artifact@v7,
+          with: { name: Kraken-Player-Linux-deb-arm64, path: dist/*-arm64.deb },
+        }
+      - {
+          name: Upload Artifacts - Linux RPM x64,
+          if: matrix.target == 'linux-x64',
+          uses: actions/upload-artifact@v7,
+          with: { name: Kraken-Player-Linux-rpm-x64, path: dist/*-x86_64.rpm },
+        }
+      - {
+          name: Upload Artifacts - Linux RPM arm64,
+          if: matrix.target == 'linux-arm64',
+          uses: actions/upload-artifact@v7,
+          with: { name: Kraken-Player-Linux-rpm-arm64, path: dist/*-aarch64.rpm },
+        }
+      - {
+          name: Upload Artifacts - Linux Tar x64,
+          if: matrix.target == 'linux-x64',
+          uses: actions/upload-artifact@v7,
+          with: { name: Kraken-Player-Linux-tar-x64, path: dist/*-x64.tar.gz },
+        }
+      - {
+          name: Upload Artifacts - Linux Tar arm64,
+          if: matrix.target == 'linux-arm64',
+          uses: actions/upload-artifact@v7,
+          with: { name: Kraken-Player-Linux-tar-arm64, path: dist/*-arm64.tar.gz },
+        }

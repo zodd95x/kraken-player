@@ -1,0 +1,406 @@
+// 路由动画 - 离场动画尽量短，减少 out-in 等待时间
+.router-slide-enter-active {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+.router-slide-leave-active {
+  transition:
+    opacity 0.1s ease,
+    transform 0.1s ease;
+}
+.router-slide-enter-from,
+.router-slide-leave-to {
+  opacity: 0;
+  transform: translate3d(10px, 0, 0);
+}
+
+.router-fade-enter-active {
+  transition: opacity 0.2s ease;
+}
+.router-fade-leave-active {
+  transition: opacity 0.1s ease;
+}
+.router-fade-enter-from,
+.router-fade-leave-to {
+  opacity: 0;
+}
+
+.router-zoom-enter-active {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+.router-zoom-leave-active {
+  transition:
+    opacity 0.1s ease,
+    transform 0.1s ease;
+}
+.router-zoom-enter-from,
+.router-zoom-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.router-up-enter-active {
+  transition:
+    opacity 0.2s ease,
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.router-up-leave-active {
+  transition: opacity 0.1s ease;
+}
+.router-up-enter-from {
+  opacity: 0;
+  transform: translate3d(0, 20px, 0);
+}
+.router-up-enter-to {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+.router-up-leave-to {
+  opacity: 0;
+}
+
+// flow
+.router-flow-enter-active {
+  transition:
+    opacity 0.35s cubic-bezier(0.2, 0, 0.2, 1),
+    transform 0.35s cubic-bezier(0.2, 0, 0.2, 1);
+}
+.router-flow-leave-active {
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+.router-flow-enter-from {
+  opacity: 0;
+  transform: translateY(10px) scale(0.99);
+}
+.router-flow-leave-to {
+  opacity: 0;
+  transform: translateY(-5px) scale(0.99);
+}
+
+// mask-left
+.router-mask-left-enter-active {
+  transition: clip-path 0.5s cubic-bezier(0, 0, 0.2, 1);
+}
+.router-mask-left-leave-active {
+  transition: clip-path 0.15s ease-in;
+}
+.router-mask-left-enter-from {
+  clip-path: inset(0 100% 0 0);
+}
+.router-mask-left-enter-to {
+  clip-path: inset(0 0 0 0);
+}
+.router-mask-left-leave-from {
+  clip-path: inset(0 0 0 0);
+}
+.router-mask-left-leave-to {
+  clip-path: inset(0 0 0 100%);
+}
+
+// mask-top
+.router-mask-top-enter-active {
+  transition: clip-path 0.5s cubic-bezier(0, 0, 0.2, 1);
+}
+.router-mask-top-leave-active {
+  transition: clip-path 0.15s ease-in;
+}
+.router-mask-top-enter-from {
+  clip-path: inset(0 0 100% 0);
+}
+.router-mask-top-enter-to {
+  clip-path: inset(0 0 0 0);
+}
+.router-mask-top-leave-from {
+  clip-path: inset(0 0 0 0);
+}
+.router-mask-top-leave-to {
+  clip-path: inset(100% 0 0 0);
+}
+
+// fade
+.fade-enter-active {
+  transition: opacity 0.15s ease-in-out;
+}
+.fade-leave-active {
+  transition: opacity 0.1s ease-in-out;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+// fadeDown
+.fadeDown-enter-active {
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+.fadeDown-leave-active {
+  transition:
+    opacity 0.1s ease,
+    transform 0.1s ease;
+}
+
+.fadeDown-enter-from,
+.fadeDown-leave-to {
+  opacity: 0;
+  transform: translate3d(0, -10px, 0);
+}
+
+// left-sm
+.left-sm-enter-active {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition:
+    transform 0.2s,
+    opacity 0.2s;
+}
+.left-sm-leave-active {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition:
+    transform 0.1s,
+    opacity 0.1s;
+}
+.left-sm-enter-from,
+.left-sm-leave-to {
+  opacity: 0;
+  transform: translate3d(-5px, 0, 0);
+}
+
+// shrink
+.shrink-enter-active {
+  opacity: 1;
+  transform: scale(1);
+  transition:
+    transform 0.2s,
+    opacity 0.2s;
+}
+.shrink-leave-active {
+  opacity: 1;
+  transform: scale(1);
+  transition:
+    transform 0.1s,
+    opacity 0.1s;
+}
+.shrink-enter-from,
+.shrink-leave-to {
+  opacity: 0;
+  transform: scale(0.4);
+}
+
+// zoom
+.zoom-enter-active {
+  opacity: 1;
+  transform: scale(1);
+  transition:
+    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.zoom-leave-active {
+  opacity: 1;
+  transform: scale(1);
+  transition:
+    transform 0.1s ease,
+    opacity 0.1s ease;
+}
+.zoom-enter-from,
+.zoom-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+// up
+.up-enter-active,
+.up-leave-active {
+  transform: translateY(0);
+  transition: transform 0.5s cubic-bezier(0.65, 0.05, 0.36, 1);
+}
+.up-enter-from,
+.up-leave-to {
+  transform: translateY(100%);
+}
+
+// left
+.left-enter-active,
+.left-leave-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition:
+    transform 0.3s,
+    opacity 0.3s;
+}
+.left-enter-from,
+.left-leave-to {
+  transform: translateX(-100%);
+}
+
+// smooth
+.smooth-enter-active,
+.smooth-leave-active {
+  transition:
+    opacity 0.5s cubic-bezier(0.25, 0.8, 0.25, 1),
+    transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.smooth-enter-from,
+.smooth-leave-to {
+  opacity: 0;
+  transform: translateY(20px) scale(0.96);
+}
+
+// flow (player)
+.flow-enter-active,
+.flow-leave-active {
+  transition:
+    opacity 0.5s cubic-bezier(0.2, 0, 0.2, 1),
+    transform 0.5s cubic-bezier(0.2, 0, 0.2, 1),
+    filter 0.5s cubic-bezier(0.2, 0, 0.2, 1);
+}
+.flow-enter-from,
+.flow-leave-to {
+  opacity: 0;
+  transform: scale(0.92) translateY(30px);
+  filter: blur(10px);
+}
+
+// 侧边栏滑入动画
+.slideLeft-enter-active,
+.slideLeft-leave-active {
+  transition: transform 0.3s ease;
+}
+.slideLeft-enter-from,
+.slideLeft-leave-to {
+  transform: translateX(-100%);
+}
+
+// 歌词滚动动画
+.lyric-slide-enter-active,
+.lyric-slide-leave-active {
+  transition: all 0.3s cubic-bezier(0.55, 0, 0.1, 1);
+}
+.lyric-slide-enter-from {
+  opacity: 0;
+  transform: translateY(100%);
+}
+.lyric-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-100%);
+}
+.lyric-slide-leave-active {
+  position: absolute;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+@keyframes coverRotate {
+  0% {
+    transform: rotate(0deg) scale(1) translateX(0);
+  }
+  50% {
+    transform: rotate(180deg) scale(2) translateX(40%);
+  }
+  100% {
+    transform: rotate(360deg) scale(1) translateX(0);
+  }
+}
+
+@keyframes playerCoverRotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fade-spacing {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+    letter-spacing: 12px;
+  }
+}
+
+@keyframes fade-down {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-up {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes breathe {
+  0% {
+    transform: scale(0.95);
+  }
+
+  50% {
+    transform: scale(1.1);
+  }
+
+  100% {
+    transform: scale(0.95);
+  }
+}
+
+@keyframes slide-up-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes highlight-pulse {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  40% {
+    opacity: 0;
+  }
+  60% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+  }
+}

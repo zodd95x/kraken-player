@@ -1,0 +1,40 @@
+name: Stale Issue & PR Management
+
+permissions:
+  issues: write
+  pull-requests: write
+
+on:
+  schedule:
+    - cron: "0 */6 * * *" # 每 6 小时运行一次
+  workflow_dispatch: # 可手动运行
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mark and close stale issues & PRs
+        uses: actions/stale@v8
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          # 过期规则
+          # 30 天后标记为 stale
+          days-before-stale: 30
+          # 7 天后关闭
+          days-before-close: 7
+          # 处理 200 个 PR 和 Issue
+          operations-per-run: 200
+          # 自动评论内容
+          stale-issue-message: |
+            👀 该 Issue 已经 30 天没有任何更新啦
+            如果问题仍然存在，请回复此评论，否则将在 7 天后自动关闭
+          stale-pr-message: |
+            👀 该 Pull Request 已经 30 天没有活动啦
+            如仍需继续处理，请回复此评论，否则将在 7 天后自动关闭
+          # 给过期项添加的标签
+          stale-issue-label: "过期"
+          stale-pr-label: "过期"
+          # 不会被标记为 stale 的 PR 和 Issue
+          exempt-draft-pr: true
+          exempt-issue-labels: "BUG,重要,高优先级 P0,中优先级 P1,需要帮助"
+          exempt-pr-labels: "BUG,重要,高优先级 P0,中优先级 P1,需要帮助"
