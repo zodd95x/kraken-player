@@ -127,7 +127,7 @@ const specialContributors = [
     description: "Kraken Player 创始人及维护者",
     avatar: "/images/avatar/zodd95x.png",
     buttonText: "GitHub",
-    url: "https://github.com/zodd95x",
+    url: "https://github.com/zodd95x/kraken-player",
   },
   {
     name: "imsyy",

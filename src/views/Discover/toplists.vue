@@ -36,6 +36,7 @@ const GLOBAL_CHART_KEYWORDS = [
   "NRJ",
   "全球",
   "美国",
+  "俄罗斯",
   "Spotify",
   "iTunes",
   "Apple Music",
