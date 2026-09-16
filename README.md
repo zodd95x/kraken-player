@@ -27,7 +27,7 @@ Get the latest version on the **[Releases](https://github.com/zodd95x/kraken-pla
 | ------ | ----- |
 | Windows | `KrakenPlayer-*-setup.exe` (installer) or `*-portable.exe` (no install) |
 | macOS | `KrakenPlayer-*.dmg` (Intel and Apple Silicon) |
-| Linux | `.AppImage`, `.deb`, `.rpm`, `pacman` or `.tar.gz` |
+| Linux | `.AppImage` or `.deb` |
 
 > **Windows**: on first launch, SmartScreen may show a warning (unsigned app) — click “More info”, then “Run anyway”.
 > **macOS**: the app is not notarized — right-click it and choose “Open” on first launch.

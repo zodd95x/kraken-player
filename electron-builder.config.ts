@@ -129,13 +129,9 @@ const config: Configuration = {
       ],
     },
     target: [
-      // DMG 安装版
+      // DMG 安装版 (zip 已移除：与 dmg 做同样事，页面更清晰)
       {
         target: "dmg",
-      },
-      // 压缩包安装版
-      {
-        target: "zip",
       },
     ],
   },
@@ -147,12 +143,8 @@ const config: Configuration = {
     icon: "public/icons/favicon-512x512.png",
     // Linux 所有格式的统一文件名模板
     artifactName: "${name}-${version}-${arch}.${ext}",
-    // 构建类型 - 支持 x64 和 ARM64 架构
+    // 构建类型 - 仅保留 AppImage + deb（页面更清晰）
     target: [
-      // Pacman 包管理器
-      {
-        target: "pacman",
-      },
       // AppImage 格式
       {
         target: "AppImage",
@@ -160,19 +152,6 @@ const config: Configuration = {
       // Debian 包管理器
       {
         target: "deb",
-      },
-      // RPM 包管理器
-      {
-        target: "rpm",
-      },
-      // Snap 包管理器（仅支持 x64 架构）
-      // {
-      //   target: "snap",
-      //   arch: ["x64"],
-      // },
-      // 压缩包格式
-      {
-        target: "tar.gz",
       },
     ],
     // 维护者信息

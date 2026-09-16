@@ -10,7 +10,7 @@ Get the latest version for your system on the **[Releases](https://github.com/zo
 | ------- | --------------------------------------------------------- |
 | Windows | `KrakenPlayer-*-setup.exe` (installer) or `*-portable.exe` |
 | macOS   | `KrakenPlayer-*.dmg` (Intel and Apple Silicon)            |
-| Linux   | `.AppImage`, `.deb`, `.rpm`, `pacman` or `.tar.gz`        |
+| Linux   | `.AppImage` or `.deb`                                     |
 
 Prefer building from source?
 
