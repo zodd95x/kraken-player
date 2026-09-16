@@ -181,6 +181,52 @@ export const getMcpToolsList = () => [
       required: ["id"],
     },
   },
+  {
+    name: "create_playlist",
+    description: "Create a new local playlist with the given name.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: {
+          type: "string",
+          description: "Playlist name",
+        },
+        description: {
+          type: "string",
+          description: "Playlist description (optional)",
+        },
+      },
+      required: ["name"],
+    },
+  },
+  {
+    name: "add_songs_to_playlist",
+    description: "Add songs (by ID) to a local playlist.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        playlistId: {
+          type: "string",
+          description: "Local playlist ID exactly as returned by list_playlists (string, copy verbatim)",
+        },
+        songIds: {
+          type: "array",
+          items: { type: "number" },
+          description: "Song IDs to add (see search_songs)",
+        },
+      },
+      required: ["playlistId", "songIds"],
+    },
+  },
+  {
+    name: "list_playlists",
+    description: "List local playlists with their song counts.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      additionalProperties: false,
+    },
+  },
 ];
 
 /**
@@ -410,6 +456,102 @@ export const executeMcpTool = async (
       } catch (err: any) {
         return {
           content: [{ type: "text", text: `播放失败: ${err.message || String(err)}` }],
+          isError: true,
+        };
+      }
+    }
+
+    case "create_playlist": {
+      const name = String(args.name || "").trim();
+      if (!name) {
+        return {
+          content: [{ type: "text", text: "A non-empty playlist name is required" }],
+          isError: true,
+        };
+      }
+      try {
+        const resp = await invokeRendererAction(
+          "mcp:create-playlist",
+          "mcp:create-playlist-response",
+          { name, description: String(args.description || "") },
+        );
+        if (!resp.success) {
+          return {
+            content: [{ type: "text", text: resp.message || "Failed to create playlist" }],
+            isError: true,
+          };
+        }
+        return {
+          content: [{ type: "text", text: JSON.stringify({ ok: true, playlist: resp.playlist }) }],
+        };
+      } catch (err: any) {
+        return {
+          content: [{ type: "text", text: `Failed to create playlist: ${err.message || String(err)}` }],
+          isError: true,
+        };
+      }
+    }
+
+    case "add_songs_to_playlist": {
+      // Playlist IDs are 16-digit numbers: keep them as strings end-to-end
+      // so JSON transport never loses precision.
+      const playlistId = String(args.playlistId || "").trim();
+      const songIds = Array.isArray(args.songIds)
+        ? args.songIds.map(Number).filter((id) => Number.isFinite(id))
+        : [];
+      if (!playlistId || songIds.length === 0) {
+        return {
+          content: [{ type: "text", text: "Valid playlistId and a non-empty songIds array are required" }],
+          isError: true,
+        };
+      }
+      try {
+        const resp = await invokeRendererAction(
+          "mcp:add-songs-to-playlist",
+          "mcp:add-songs-to-playlist-response",
+          { playlistId, songIds },
+        );
+        if (!resp.success) {
+          return {
+            content: [{ type: "text", text: resp.message || "Failed to add songs" }],
+            isError: true,
+          };
+        }
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({ ok: true, addedCount: resp.addedCount }),
+            },
+          ],
+        };
+      } catch (err: any) {
+        return {
+          content: [{ type: "text", text: `Failed to add songs: ${err.message || String(err)}` }],
+          isError: true,
+        };
+      }
+    }
+
+    case "list_playlists": {
+      try {
+        const resp = await invokeRendererAction(
+          "mcp:list-playlists",
+          "mcp:list-playlists-response",
+          {},
+        );
+        if (!resp.success) {
+          return {
+            content: [{ type: "text", text: resp.message || "Failed to list playlists" }],
+            isError: true,
+          };
+        }
+        return {
+          content: [{ type: "text", text: JSON.stringify({ ok: true, playlists: resp.playlists }) }],
+        };
+      } catch (err: any) {
+        return {
+          content: [{ type: "text", text: `Failed to list playlists: ${err.message || String(err)}` }],
           isError: true,
         };
       }

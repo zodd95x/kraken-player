@@ -150,8 +150,8 @@ const musicStore = useMusicStore();
 const settingStore = useSettingStore();
 const statusStore = useStatusStore();
 
-// 当前选中的国家（手动选择存入设置，下次打开保留，默认法国）
-const selectedCountry = ref<string>(settingStore.radioCountry || "FR");
+// Currently selected country (manual choice is saved, default United States)
+const selectedCountry = ref<string>(settingStore.radioCountry || "US");
 const stations = ref<RadioStation[]>([]);
 const loading = ref<boolean>(false);
 const error = ref<boolean>(false);

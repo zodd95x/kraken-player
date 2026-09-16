@@ -755,7 +755,7 @@ export const useSettingStore = defineStore("setting", {
       },
     },
     mcp: {
-      enabled: true,
+      enabled: false,
       port: 14559,
       accessKey: "",
     },

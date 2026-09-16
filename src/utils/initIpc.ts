@@ -1,8 +1,8 @@
 import { usePlayerController } from "@/core/player/PlayerController";
 import { useAudioManager } from "@/core/player/AudioManager";
 import * as playerIpc from "@/core/player/PlayerIpc";
-import { useDataStore, useMusicStore, useSettingStore, useStatusStore } from "@/stores";
-import type { SettingType } from "@/types/main";
+import { useDataStore, useLocalStore, useMusicStore, useSettingStore, useStatusStore } from "@/stores";
+import type { SettingType, SongType } from "@/types/main";
 import { TASKBAR_IPC_CHANNELS, type TaskbarLyricSettings } from "@/types/shared";
 import { handleProtocolUrl } from "@/utils/protocol";
 import { cloneDeep } from "lodash-es";
@@ -338,6 +338,119 @@ const initIpc = () => {
           });
         } catch (err: any) {
           window.electron.ipcRenderer.send("mcp:play-track-by-id-response", {
+            requestId,
+            success: false,
+            message: err?.message || String(err),
+          });
+        }
+      },
+    );
+
+    // MCP: create a local playlist (IDs travel as strings, see tools.ts)
+    window.electron.ipcRenderer.on(
+      "mcp:create-playlist",
+      async (
+        _,
+        { requestId, name, description }: { requestId: string; name: string; description?: string },
+      ) => {
+        try {
+          const localStore = useLocalStore();
+          const playlist = await localStore.createLocalPlaylist(name, description);
+          window.electron.ipcRenderer.send("mcp:create-playlist-response", {
+            requestId,
+            success: true,
+            playlist: { id: String(playlist.id), name: playlist.name, songCount: 0 },
+          });
+        } catch (err: any) {
+          window.electron.ipcRenderer.send("mcp:create-playlist-response", {
+            requestId,
+            success: false,
+            message: err?.message || String(err),
+          });
+        }
+      },
+    );
+
+    // MCP: add songs to a local playlist
+    window.electron.ipcRenderer.on(
+      "mcp:add-songs-to-playlist",
+      async (
+        _,
+        {
+          requestId,
+          playlistId,
+          songIds,
+        }: { requestId: string; playlistId: string | number; songIds: (number | string)[] },
+      ) => {
+        try {
+          const localStore = useLocalStore();
+          const target = localStore.localPlaylists.find(
+            (p) => String(p.id) === String(playlistId),
+          );
+          if (!target) {
+            window.electron.ipcRenderer.send("mcp:add-songs-to-playlist-response", {
+              requestId,
+              success: false,
+              message: `Playlist ${playlistId} not found`,
+            });
+            return;
+          }
+          // Resolve full song objects (covers/metadata cache), skip failures
+          const resolved: SongType[] = [];
+          for (const rawId of songIds) {
+            try {
+              const result = await songDetail(Number(rawId));
+              const songs = formatSongsList(result.songs || []);
+              if (songs.length > 0) resolved.push(songs[0]);
+            } catch {
+              // skip unresolvable IDs
+            }
+          }
+          if (resolved.length === 0) {
+            window.electron.ipcRenderer.send("mcp:add-songs-to-playlist-response", {
+              requestId,
+              success: false,
+              message: "No valid songs to add",
+            });
+            return;
+          }
+          const { addedCount } = await localStore.addSongsToLocalPlaylist(
+            Number(playlistId),
+            resolved.map((s) => String(s.id)),
+            resolved,
+          );
+          window.electron.ipcRenderer.send("mcp:add-songs-to-playlist-response", {
+            requestId,
+            success: true,
+            addedCount,
+          });
+        } catch (err: any) {
+          window.electron.ipcRenderer.send("mcp:add-songs-to-playlist-response", {
+            requestId,
+            success: false,
+            message: err?.message || String(err),
+          });
+        }
+      },
+    );
+
+    // MCP: list local playlists
+    window.electron.ipcRenderer.on(
+      "mcp:list-playlists",
+      (_, { requestId }: { requestId: string }) => {
+        try {
+          const localStore = useLocalStore();
+          window.electron.ipcRenderer.send("mcp:list-playlists-response", {
+            requestId,
+            success: true,
+            playlists: localStore.localPlaylists.map((p) => ({
+              id: String(p.id),
+              name: p.name,
+              songCount: p.songs.length,
+            })),
+          });
+        } catch (err: any) {
+          window.electron.ipcRenderer.send("mcp:list-playlists-response", {
             requestId,
             success: false,
             message: err?.message || String(err),
