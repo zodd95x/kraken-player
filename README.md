@@ -1,12 +1,12 @@
-# Kraken Player
+# <img src="public/icons/logo-icon.png" width="110" valign="middle" alt="Kraken Player logo"> Kraken Player
 
 ![License](https://img.shields.io/badge/license-AGPL--3.0-green)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-blue)
 ![Version](https://img.shields.io/github/v/release/zodd95x/kraken-player)
 
-Kraken Player is a **free and open-source music player for desktop** (Windows, Mac and Linux). Listen to your music, follow lyrics on screen and organize your playlists.
+**Free and open-source music player — your music, without limits.**
 
-> Available in **French, English and Chinese**.
+Available in **French, English and Chinese**.
 
 ## Features
 
