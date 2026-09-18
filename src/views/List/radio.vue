@@ -44,7 +44,6 @@
 import type { DropdownOption, MessageReactive } from "naive-ui";
 import { formatCoverList, formatSongsList } from "@/utils/format";
 import { renderIcon, copyData, getShareUrl } from "@/utils/helper";
-import { useDataStore } from "@/stores";
 import { radioAllProgram, radioDetail } from "@/api/radio";
 import { getPodcastDetailAndEpisodes, parseCustomRssFeed } from "@/api/podcast";
 import { useListDetail } from "@/composables/List/useListDetail";
@@ -55,7 +54,6 @@ import { useListDataCache, type ListCacheData } from "@/composables/List/useList
 import { trSetting } from "@/utils/i18nSettings";
 
 const router = useRouter();
-const dataStore = useDataStore();
 
 const {
   detailData,
