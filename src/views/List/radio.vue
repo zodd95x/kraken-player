@@ -13,22 +13,7 @@
       @update:search-value="handleSearchUpdate"
       @play-all="playAllSongs"
       @tab-change="handleTabChange"
-    >
-      <template #action-buttons>
-        <n-button
-          :focusable="false"
-          strong
-          secondary
-          round
-          @click="toSubRadio(radioId, !isLikeRadio)"
-        >
-          <template #icon>
-            <SvgIcon :name="isLikeRadio ? 'Favorite' : 'FavoriteBorder'" />
-          </template>
-          {{ isLikeRadio ? trSetting("取消订阅") : trSetting("订阅") }}
-        </n-button>
-      </template>
-    </ListDetail>
+    />
     <!-- 歌曲列表 -->
     <template v-if="currentTab === 'songs'">
       <SongList
@@ -66,7 +51,6 @@ import { useListDetail } from "@/composables/List/useListDetail";
 import { useListSearch } from "@/composables/List/useListSearch";
 import { useListScroll } from "@/composables/List/useListScroll";
 import { useListActions } from "@/composables/List/useListActions";
-import { toSubRadio } from "@/utils/auth";
 import { useListDataCache, type ListCacheData } from "@/composables/List/useListDataCache";
 import { trSetting } from "@/utils/i18nSettings";
 
@@ -105,11 +89,6 @@ const songListHeight = computed(() => getSongListHeight(listScrolling.value));
 
 // 当前 tab
 const currentTab = ref<"songs" | "comments">("songs");
-
-// 是否处于收藏播客
-const isLikeRadio = computed(() => {
-  return dataStore.userLikeData.djs.some((radio) => radio.id === detailData.value?.id);
-});
 
 // 是否处于播客页面
 const isPlaylistPage = computed<boolean>(() => router.currentRoute.value.name === "radio");

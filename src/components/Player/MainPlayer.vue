@@ -100,7 +100,7 @@
                   <n-text
                     v-if="musicStore.playSong.type === 'radio'"
                     class="ar-item"
-                    @click="showCreatorTip"
+                    @click="goCreatorOrRadioPage"
                   >
                     {{ musicStore.playSong.dj?.creator || trSetting("未知艺术家") }}
                   </n-text>
@@ -405,8 +405,15 @@ const instantLyrics = computed(() => {
   return contentStr || "";
 });
 
-// 暂不支持查看主播主页
-const showCreatorTip = () => window.$message.info(trSetting("暂不支持查看主播主页"));
+// 播客单集：点击名称前往播客页面，无电台 ID 时提示
+const goCreatorOrRadioPage = () => {
+  const radioId = musicStore.playSong?.dj?.radioId;
+  if (radioId) {
+    router.push({ name: "radio", query: { id: String(radioId) } });
+  } else {
+    window.$message.info(trSetting("暂不支持查看主播主页"));
+  }
+};
 </script>
 
 <style lang="scss" scoped>
