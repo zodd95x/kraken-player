@@ -21,13 +21,16 @@ Available in **French, English and Chinese**.
 
 ## Download
 
-Get the latest version on the **[Releases](https://github.com/zodd95x/kraken-player/releases)** page:
+| Platform | Link |
+| -------- | ---- |
+| Windows (installer, recommended) | [Download](https://github.com/zodd95x/kraken-player/releases/latest/download/Kraken.Player-3.1.2-x64-setup.exe) |
+| Windows (portable, no install) | [Download](https://github.com/zodd95x/kraken-player/releases/latest/download/Kraken.Player-3.1.2-x64-portable.exe) |
+| macOS (Apple Silicon) | [Download](https://github.com/zodd95x/kraken-player/releases/download/v3.1.1/Kraken.Player-3.1.1-arm64.dmg) |
+| macOS (Intel) | [Download](https://github.com/zodd95x/kraken-player/releases/download/v3.1.1/Kraken.Player-3.1.1-x64.dmg) |
+| Linux (AppImage) | [Download](https://github.com/zodd95x/kraken-player/releases/download/v3.1.1/kraken-player-3.1.1-x86_64.AppImage) |
+| Linux (Ubuntu/Debian) | [Download](https://github.com/zodd95x/kraken-player/releases/download/v3.1.1/kraken-player-3.1.1-amd64.deb) |
 
-| System | Files |
-| ------ | ----- |
-| Windows | `KrakenPlayer-*-setup.exe` (installer) or `*-portable.exe` (no install) |
-| macOS | `KrakenPlayer-*.dmg` (Intel and Apple Silicon) |
-| Linux | `.AppImage` or `.deb` |
+Other versions: see the **[Releases](https://github.com/zodd95x/kraken-player/releases)** page.
 
 > **Windows**: on first launch, SmartScreen may show a warning (unsigned app) — click “More info”, then “Run anyway”.
 > **macOS**: the app is not notarized — right-click it and choose “Open” on first launch.

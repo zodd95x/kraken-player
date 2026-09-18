@@ -47,8 +47,8 @@ const config: Configuration = {
     executableName: "KrakenPlayer",
     // 应用程序的图标文件路径
     icon: "public/icons/logo.ico",
-    // Windows 平台全局文件名模板
-    artifactName: "${productName}-${version}-${arch}.${ext}",
+    // Windows 平台全局文件名模板（无版本号：liens de téléchargement stables）
+    artifactName: "${productName}-${arch}.${ext}",
     // 是否对可执行文件进行签名和编辑
     // signAndEditExecutable: false,
     // 构建类型（架构由命令行参数 --x64 或 --arm64 指定）
@@ -74,8 +74,8 @@ const config: Configuration = {
   nsis: {
     // 是否一键式安装
     oneClick: false,
-    // 安装程序的生成名称
-    artifactName: "${productName}-${version}-${arch}-setup.${ext}",
+    // 安装程序的生成名称（无版本号：liens de téléchargement stables）
+    artifactName: "${productName}-${arch}-setup.${ext}",
     // 创建的桌面快捷方式名称
     shortcutName: "${productName}",
     // 卸载时显示的名称
@@ -93,8 +93,8 @@ const config: Configuration = {
   },
   // Portable 便携版配置
   portable: {
-    // 便携版文件名
-    artifactName: "${productName}-${version}-${arch}-portable.${ext}",
+    // 便携版文件名（无版本号：liens de téléchargement stables）
+    artifactName: "${productName}-${arch}-portable.${ext}",
   },
   // macOS 平台配置
   mac: {
@@ -102,8 +102,8 @@ const config: Configuration = {
     executableName: "KrakenPlayer",
     // 应用程序的图标文件路径
     icon: "public/icons/icon.icns",
-    // macOS 平台全局文件名模板
-    artifactName: "${productName}-${version}-${arch}.${ext}",
+    // macOS 平台全局文件名模板（无版本号：liens de téléchargement stables）
+    artifactName: "${productName}-${arch}.${ext}",
     // 不签名
     identity: null,
     hardenedRuntime: false,
@@ -141,8 +141,8 @@ const config: Configuration = {
     executableName: "KrakenPlayer",
     // 应用程序的图标文件路径
     icon: "public/icons/favicon-512x512.png",
-    // Linux 所有格式的统一文件名模板
-    artifactName: "${name}-${version}-${arch}.${ext}",
+    // Linux 所有格式的统一文件名模板（无版本号：liens de téléchargement stables）
+    artifactName: "${name}-${arch}.${ext}",
     // 构建类型 - 仅保留 AppImage + deb（页面更清晰）
     target: [
       // AppImage 格式
@@ -169,8 +169,8 @@ const config: Configuration = {
   },
   // AppImage 特定配置
   appImage: {
-    // AppImage 文件的生成名称
-    artifactName: "${name}-${version}-${arch}.${ext}",
+    // AppImage 文件的生成名称（无版本号：liens de téléchargement stables）
+    artifactName: "${name}-${arch}.${ext}",
   },
   // 是否在构建之前重新编译原生模块
   npmRebuild: false,
