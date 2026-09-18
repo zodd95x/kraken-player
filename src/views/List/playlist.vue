@@ -230,17 +230,6 @@ const moreOptions = computed<DropdownOption[]>(() => [
     },
     icon: renderIcon("Share"),
   },
-  {
-    label: trSetting("打开源网页"),
-    key: "open",
-    show: !isLocalPlaylist.value,
-    props: {
-      onClick: () => {
-        window.open(`https://music.163.com/#/playlist?id=${playlistId.value}`);
-      },
-    },
-    icon: renderIcon("Link"),
-  },
 ]);
 
 // 获取歌单基础信息

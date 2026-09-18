@@ -170,16 +170,6 @@ const moreOptions = computed<DropdownOption[]>(() => [
     },
     icon: renderIcon("Share"),
   },
-  {
-    label: trSetting("打开源网页"),
-    key: "open",
-    props: {
-      onClick: () => {
-        window.open(`https://music.163.com/#/djradio?id=${radioId.value}`);
-      },
-    },
-    icon: renderIcon("Link"),
-  },
 ]);
 
 // 获取播客基础信息
