@@ -23,8 +23,8 @@ Available in **French, English and Chinese**.
 
 | Platform | Link |
 | -------- | ---- |
-| Windows (installer, recommended) | [Download](https://github.com/zodd95x/kraken-player/releases/latest/download/Kraken.Player-3.1.2-x64-setup.exe) |
-| Windows (portable, no install) | [Download](https://github.com/zodd95x/kraken-player/releases/latest/download/Kraken.Player-3.1.2-x64-portable.exe) |
+| Windows (installer, recommended) | [Download](https://github.com/zodd95x/kraken-player/releases/latest/download/Kraken.Player-x64-setup.exe) |
+| Windows (portable, no install) | [Download](https://github.com/zodd95x/kraken-player/releases/latest/download/Kraken.Player-x64-portable.exe) |
 | macOS (Apple Silicon) | [Download](https://github.com/zodd95x/kraken-player/releases/download/v3.1.1/Kraken.Player-3.1.1-arm64.dmg) |
 | macOS (Intel) | [Download](https://github.com/zodd95x/kraken-player/releases/download/v3.1.1/Kraken.Player-3.1.1-x64.dmg) |
 | Linux (AppImage) | [Download](https://github.com/zodd95x/kraken-player/releases/download/v3.1.1/kraken-player-3.1.1-x86_64.AppImage) |
